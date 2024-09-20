@@ -6,7 +6,7 @@ CONFIG_PATH=${SCRIPT_DIR}/storage-conf
 WORKLOAD_PATH=${CONFIG_PATH}/workload
 
 # TODO add DLRM when supported
-WORKLOADS=("unet3d" "cosmoflow" "resnet50")
+WORKLOADS=("unet3d" "cosmoflow" "resnet50" "llm")
 
 get_config_file() {
 	local workload=$1; shift
@@ -216,7 +216,10 @@ datasize() {
 	# calculate required minimum samples given host memory to eliminate client-side caching effects
 	min_samples_host_memory=$(echo "$num_client_hosts * $client_host_memory_per_host_in_gb * $HOST_MEMORY_MULTIPLIER * 1024 * 1024 * 1024 / $record_length" | bc)
 	# ensure we meet both constraints: min_samples = max(min_samples_v1, min_samples_v2)
+	echo "min_samples_steps_per_epoch: ${min_samples_steps_per_epoch} = ${num_steps_per_epoch} * ${batch_size} * ${num_accelerators}"
+	echo "min_samples_host_memory: ${min_samples_host_memory} = ${num_client_hosts} * ${client_host_memory_per_host_in_gb} * ${HOST_MEMORY_MULTIPLIER} * 1024^3 / ${record_length}"
 	min_samples=$(( $min_samples_steps_per_epoch  > $min_samples_host_memory ? $min_samples_steps_per_epoch : $min_samples_host_memory ))
+	echo "min_samples = ${min_samples}"
 	# calculate minimum files to generate
 	min_total_files=$(echo "$min_samples / $num_samples_per_file" | bc)
 	min_files_size=$(echo "$min_samples * $record_length / 1024 / 1024 / 1024" | bc)
@@ -253,7 +256,7 @@ datagen() {
 	fi
 	config_name=$(get_config_file $workload $accelerator_type)
 	prefixed_array=$(add_prefix_params ${params[@]})
-	mpirun -np $parallel python3 dlio_benchmark/dlio_benchmark/main.py --config-path=$CONFIG_PATH workload=$config_name ++workload.workflow.generate_data=True ++workload.workflow.train=False ${prefixed_array[@]} ${EXTRA_PARAMS[@]}
+	mpirun.mpich -np $parallel python3 dlio_benchmark/dlio_benchmark/main.py --config-path=$CONFIG_PATH workload=$config_name ++workload.workflow.generate_data=True ++workload.workflow.train=False ${prefixed_array[@]} ${EXTRA_PARAMS[@]}
 }
 
 run() {
@@ -277,7 +280,7 @@ run() {
 	fi
 	config_name=$(get_config_file $workload $accelerator_type)
 	prefixed_array=$(add_prefix_params ${params[@]})
-	mpirun -hosts $hosts -np $num_accelerators python3 dlio_benchmark/dlio_benchmark/main.py --config-path=$CONFIG_PATH workload=$config_name ++workload.workflow.generate_data=False ++workload.workflow.train=True ${prefixed_array[@]} ${EXTRA_PARAMS[@]}
+	mpirun.mpich -hosts $hosts -np $num_accelerators python3 dlio_benchmark/dlio_benchmark/main.py --config-path=$CONFIG_PATH workload=$config_name ++workload.workflow.generate_data=False ++workload.workflow.train=True ${prefixed_array[@]} ${EXTRA_PARAMS[@]}
 	#python report.py --result-dir $results_dir --config-path=$CONFIG_PATH
 }
 
