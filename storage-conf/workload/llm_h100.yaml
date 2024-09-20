@@ -1,0 +1,57 @@
+model: llm
+
+framework: pytorch
+
+workflow:
+ generate_data: False
+ train: True
+ ZeRO_Infinity: True
+
+dataset:
+ num_files_train: 1024
+ num_samples_per_file: 1251
+ record_length: 114660.07
+ record_length_resize: 150528
+ data_folder: data/llm
+ format: tfrecord_llm
+
+train: 
+ computation_time: 0.938
+ epochs: 1
+ 
+reader:
+ data_loader: dali
+ read_threads: 8
+ computation_threads: 8
+ batch_size: 12800
+ dont_use_mmap: True
+
+ZeRO_Infinity:
+ parameter_size: 23647888
+ gradient_size: 0
+ optimizer_size: 0
+ parameter_num_files: 1
+ gradient_num_files: 1
+ optimizer_num_files: 1
+ parameter_folder: nvmeoffload/parameter
+ gradient_folder: nvmeoffload/gradient
+ optimizer_folder: nvmeoffload/optimizer
+ forward_epoch: 1
+ backward_epoch: 1
+ step_epoch: 1
+ forward_time: 0.3
+ forward_time_stdev: 0.
+ backward_time: 0.3
+ backward_time_stdev: 0.
+ step_time: 1
+ step_time_stdev: 0.
+ parameter_swapping: True
+ optimizer_swapping: True
+ gradient_swapping: True
+ parameter_dtype: float32
+ gradient_dtype: float32
+ optimizer_dtype: float32
+
+
+
+

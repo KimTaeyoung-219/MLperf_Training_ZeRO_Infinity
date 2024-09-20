@@ -1,4 +1,4 @@
-model: resnet50
+model: llm
 
 framework: pytorch
 
@@ -8,11 +8,10 @@ workflow:
 
 dataset:
  num_files_train: 1024
- num_samples_per_file: 1251
- record_length: 114660.07
- record_length_resize: 150528
- data_folder: data/resnet50
- format: tfrecord
+ num_samples_per_file: 55000
+ record_length: 2500
+ data_folder: data/llm
+ format: tfrecord_llm
 
 train: 
  computation_time: 0.435
